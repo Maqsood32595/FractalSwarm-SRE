@@ -1,0 +1,9 @@
+{
+  "name": "Incident Agent Service",
+  "id": "incident-agent",
+  "slug": "incident-agent",
+  "version": "1.0.0",
+  "basePath": "/api/incident-agent",
+  "description": "Orchestrates incident triage, safety guard checking, and human-in-the-loop approvals using Mastra workflows.",
+  "routes": "routes.ts"
+}

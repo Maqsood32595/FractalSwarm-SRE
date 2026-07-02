@@ -1,0 +1,9 @@
+{
+  "name": "Log Ingestion Service",
+  "id": "log-ingest",
+  "slug": "log-ingest",
+  "version": "1.0.0",
+  "basePath": "/api/log-ingest",
+  "description": "Exposes HTTP endpoints to receive live system alert/log streams and routes them into the Mastra Incident Agent.",
+  "routes": "routes.ts"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Safety Guard Service",
+  "id": "safety-guard",
+  "slug": "safety-guard",
+  "version": "1.0.0",
+  "basePath": "/api/safety-guard",
+  "description": "Intercepts and audits proposed shell commands using Enkrypt AI Guardrails to block injection attacks and dangerous operations.",
+  "routes": "routes.ts"
+}

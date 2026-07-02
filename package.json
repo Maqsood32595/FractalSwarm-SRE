@@ -1,0 +1,25 @@
+{
+  "name": "fractal-sre",
+  "version": "1.0.0",
+  "description": "Modular incident response platform with local log pre-filtering and safety-audited command execution.",
+  "main": "server/index.ts",
+  "scripts": {
+    "dev": "ts-node server/index.ts",
+    "build:wasm": "zig build-lib server/features/memory-vault/qsag_matcher.zig -target wasm32-freestanding -dynamic -rdynamic -O ReleaseFast -femit-bin=server/features/memory-vault/qsag_matcher.wasm",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@mastra/core": "^1.47.0",
+    "@qdrant/js-client-rest": "^1.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

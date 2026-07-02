@@ -1,0 +1,9 @@
+{
+  "name": "Memory Vault Service",
+  "id": "memory-vault",
+  "slug": "memory-vault",
+  "version": "1.0.0",
+  "basePath": "/api/memory-vault",
+  "description": "Hybrid memory system combining a Zig-compiled WASM binary cache for POPCNT matching and Qdrant for semantic history RAG.",
+  "routes": "routes.ts"
+}

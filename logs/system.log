@@ -1,0 +1,3 @@
+[2026-06-30 15:40:00] [INFO] System boot completed.
+[2026-06-30 15:42:00] [WARN] Disk space usage exceeds 92% on volume C:/
+[2026-06-30 15:43:10] [ERROR] OOM killer terminated process 4321.

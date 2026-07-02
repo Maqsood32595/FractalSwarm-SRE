@@ -1,0 +1,3 @@
+[2026-06-30 15:45:00] [INFO] Database connection established.
+[2026-06-30 15:45:30] [ERROR] connection pool exhausted: fatal: remaining connection slots are reserved.
+[2026-06-30 15:46:00] [WARN] client request timeout on port 5432.
