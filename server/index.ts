@@ -238,6 +238,7 @@ async function start() {
                 <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-medium">AetherSRE V2</span>
               </div>
               <div class="flex items-center gap-4">
+                <button id="approveAllBtn" onclick="approveAllSwarms()" class="hidden px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">⚡ Deploy All Parallel Swarms</button>
                 <button onclick="resetDashboard()" class="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-semibold transition">Reset Dashboard</button>
                 <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                 <span class="text-xs text-slate-400 font-medium">Control Plane Active</span>
@@ -544,6 +545,17 @@ async function start() {
                   // Update global health card status
                   updateGlobalHealth(runs);
 
+                  // Show/hide Approve All button based on suspended runs
+                  const hasSuspended = runs.some(r => r.status === 'suspended');
+                  const approveAllBtn = document.getElementById('approveAllBtn');
+                  if (approveAllBtn) {
+                    if (hasSuspended) {
+                      approveAllBtn.classList.remove('hidden');
+                    } else {
+                      approveAllBtn.classList.add('hidden');
+                    }
+                  }
+
                   const container = document.getElementById('runsContainer');
                   
                   if (runs.length === 0) {
@@ -658,6 +670,30 @@ async function start() {
                   }
                 } catch (e) {
                   showToast('❌ Reset Error', 'Network error.', 'error');
+                }
+              }
+
+              async function approveAllSwarms() {
+                const btn = document.getElementById('approveAllBtn');
+                btn.disabled = true;
+                btn.innerHTML = '⚡ Deploying...';
+                try {
+                  const res = await fetch('/api/incident-agent/resume-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                  });
+                  if (res.ok) {
+                    showToast('⚡ Parallel Swarms Resumed', 'All SRE mitigations deployed simultaneously.', 'success');
+                    fetchRuns();
+                  } else {
+                    const data = await res.json();
+                    showToast('❌ Deployment Failed', data.error || 'Bulk resumption error.', 'error');
+                  }
+                } catch (e) {
+                  showToast('❌ Deployment Error', 'Network error.', 'error');
+                } finally {
+                  btn.disabled = false;
+                  btn.innerHTML = '⚡ Deploy All Parallel Swarms';
                 }
               }
 

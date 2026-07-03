@@ -138,6 +138,52 @@ router.post('/resume', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint: Resume all suspended workflows in parallel (Bulk Approval)
+router.post('/resume-all', async (req: Request, res: Response) => {
+  const suspendedRuns = Array.from(activeRuns.values()).filter(r => r.status === 'suspended');
+  
+  if (suspendedRuns.length === 0) {
+    return res.status(400).json({ error: 'No suspended workflow runs found.' });
+  }
+
+  console.log(`[Incident Agent] Bulk resuming ${suspendedRuns.length} runs in parallel.`);
+
+  try {
+    const results = await Promise.all(suspendedRuns.map(async (runInfo) => {
+      const runId = runInfo.runId;
+      console.log(`[Incident Agent] Resuming run ID in bulk: ${runId}`);
+      runInfo.status = 'running';
+
+      // Extract the command and signature from context if present
+      const command = runInfo.context?.command || 'echo "Triage complete. System status healthy."';
+      const signature = runInfo.context?.explanation || 'Bulk approved';
+
+      const resumeResult = await runInfo.run.resume({
+        stepId: 'request-approval',
+        resumeData: { approved: true, editedCommand: command, editedSignature: signature }
+      });
+
+      runInfo.status = 'completed';
+      runInfo.result = (resumeResult as any).steps?.['execute-mitigation']?.payload || resumeResult;
+
+      return {
+        runId,
+        status: 'COMPLETED',
+        result: runInfo.result
+      };
+    }));
+
+    return res.json({
+      success: true,
+      message: `Successfully resumed ${results.length} workflows in parallel.`,
+      runs: results
+    });
+  } catch (err: any) {
+    console.error('[Incident Agent Bulk Resume Error]', err.message);
+    return res.status(500).json({ error: `Bulk resumption failed: ${err.message}` });
+  }
+});
+
 // Endpoint: Get list of runs
 router.get('/runs', (req: Request, res: Response) => {
   const runs = Array.from(activeRuns.values()).map(r => {
