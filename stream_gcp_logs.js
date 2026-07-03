@@ -43,12 +43,12 @@ async function fetchLogsFromProject(projectId) {
     const isWin = process.platform === 'win32';
     if (isWin) {
       execSync(
-        `powershell -NoProfile -Command "gcloud logging read severity>=ERROR --project=${projectId} --freshness=4320h --limit=30 --format=json | Out-File -FilePath '${tmpFile}' -Encoding UTF8"`,
+        `powershell -NoProfile -Command "gcloud logging read 'severity>=ERROR' --project=${projectId} --freshness=4320h --limit=30 --format=json | Out-File -FilePath '${tmpFile}' -Encoding UTF8"`,
         { encoding: 'utf8', timeout: 120000, maxBuffer: 10 * 1024 * 1024, shell: false }
       );
     } else {
       execSync(
-        `gcloud logging read severity>=ERROR --project=${projectId} --freshness=4320h --limit=30 --format=json > "${tmpFile}" 2>/dev/null`,
+        `gcloud logging read 'severity>=ERROR' --project=${projectId} --freshness=4320h --limit=30 --format=json > "${tmpFile}" 2>/dev/null`,
         { encoding: 'utf8', timeout: 120000, maxBuffer: 10 * 1024 * 1024, shell: true }
       );
     }
