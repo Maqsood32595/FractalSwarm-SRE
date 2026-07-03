@@ -88,3 +88,35 @@ FractalSwarm operates on a three-tier agent hierarchy connected to real-time clo
      ```bash
      node stream_gcp_logs.js
      ```
+
+---
+
+## Production Hardening Roadmap
+
+The current implementation is a functional prototype demonstrating the core agent architecture. The following items are identified for integration before enterprise deployment. None require architectural rewrites — each is an additive layer on the existing codebase.
+
+### Security (OWASP API Security)
+- **TLS 1.3:** Deploy behind Google Cloud Run or NGINX reverse proxy for automatic HTTPS termination. Currently runs plain HTTP on localhost.
+- **Authentication:** Add Google Cloud Identity-Aware Proxy (IAP) in front of all API endpoints. Currently, any network-accessible caller can trigger or approve workflow runs.
+- **Rate Limiting:** Add `express-rate-limit` middleware on the `/api/log-ingest/alert` and `/api/incident-agent/resume` endpoints to prevent abuse.
+
+### 12-Factor App Compliance
+- **Config as Environment Variables:** GCP project IDs in `stream_gcp_logs.js` are currently hardcoded. These move to `.env` / Cloud Run environment variables.
+- **Stateless Process Store:** `activeSwarmRuns` is currently an in-memory Map that is lost on process restart. Replace with Redis or Firestore to persist workflow state across restarts and instances.
+- **Structured Logging:** Replace `console.log` calls with a structured JSON logger (`pino`) so output is parseable by Cloud Logging and log aggregation systems.
+
+### Responsible AI — Explainability
+- **Reasoning Trace:** Each workflow run currently stores only the final proposed command. A `reasoning_trace` field will be added to capture: which memory vault entry matched and at what similarity score, whether the LLM or the local rule-based fallback generated the command, and the raw grandchild telemetry before compression. This trace will be surfaced in the Playbook Editor so operators can see *why* a command was proposed before approving it.
+
+### LLM Observability (OpenTelemetry)
+- **Tracing:** Instrument the Mastra workflow, each LLM agent call, and the WASM POPCNT engine with OpenTelemetry spans. Mastra has OpenTelemetry hooks built in — this is a configuration change.
+- **Export Target:** Google Cloud Trace (no additional infrastructure required for GCP-hosted deployments).
+- **Key metrics to track:** tokens consumed per incident resolution, P95 latency from alert ingestion to workflow suspension, WASM cache hit rate vs LLM fallback rate.
+
+### Data Privacy & Compliance
+- **PII Scrubbing:** GCP log entries can contain user emails, IP addresses, and service account identifiers. A scrubbing step will be added before log text is passed to any LLM call, replacing identifiers with typed tokens (`[EMAIL_REDACTED]`, `[IP_REDACTED]`).
+- **Data Residency:** For regulated environments, LLM calls will route through Vertex AI (which supports regional data residency) rather than direct AI Studio endpoints.
+- **Playbook TTL:** The `database.bin` vector store currently retains entries indefinitely. A configurable TTL field and a scheduled cleanup job will enforce data retention policies (default: 90 days).
+
+### Blast Radius Sandboxing
+- **Live Read-Only Mode:** The existing `Execute Mitigations` feature flag disables command execution globally. A more granular `SANDBOX_MODE` flag will be added that allows the agent swarm to continue diagnosing and the human operator to review proposed playbooks — but routes all execution to a dry-run logger instead of the terminal executor. This allows the session to remain active without any write risk.
