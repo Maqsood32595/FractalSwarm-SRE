@@ -30,6 +30,29 @@ export const activeSwarmRuns: Record<string, {
   result?: any;
 }> = {};
 
+// Helper utility for Exponential Backoff on rate-limited API calls (429)
+async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 5, initialDelay = 3000): Promise<T> {
+  let delay = initialDelay;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const errMsg = err.message || '';
+      const statusCode = err.statusCode || err.status || 0;
+      const isRateLimit = statusCode === 429 || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('429');
+      
+      if (isRateLimit && attempt < maxRetries) {
+        console.warn(`[Rate Limiter] Gemini rate limit hit (429/Quota) on attempt ${attempt}. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // 3s, 6s, 12s, 24s...
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 // Step 1: Fractal Agent Swarm (FAS) Triage & Investigation
 const triageStep = createStep({
   id: 'triage-incident',
@@ -109,9 +132,9 @@ const triageStep = createStep({
     const targetLog = childId === 'db-recovery' ? 'db.log' : 'system.log';
     let rawGrandchildOutput = '';
     try {
-      const grandchildResult = await grandchild.generate(
+      const grandchildResult = await retryWithBackoff(() => grandchild.generate(
         `Fetch system metrics and read the last lines of the log file: ${targetLog}`
-      );
+      ));
       rawGrandchildOutput = grandchildResult.text || 'No diagnostics fetched.';
     } catch (e: any) {
       console.warn(`[FAS Child] Grandchild LLM call failed or API Key missing: ${e.message}. Falling back to mock metrics.`);
@@ -147,7 +170,7 @@ const triageStep = createStep({
     } else {
       console.log('[FAS Parent] No high-confidence playbook match. Parent Agent actively isolating failure...');
       try {
-        const triageResponse = await incidentAgent.generate(
+        const triageResponse = await retryWithBackoff(() => incidentAgent.generate(
           `You are an expert SRE Incident Commander. We have captured a system failure:
           Root Alert: "${inputData.errorLog}"
           Compressed Diagnostics: "${compressedSummary}"
@@ -163,7 +186,7 @@ const triageStep = createStep({
             "confidence": 85
           }
           `
-        );
+        ));
         const parsed = JSON.parse(triageResponse.text || '{}');
         proposedCommand = parsed.proposedCommand || 'echo "Dynamic diagnostics complete."';
         confidence = parsed.confidence || 75;

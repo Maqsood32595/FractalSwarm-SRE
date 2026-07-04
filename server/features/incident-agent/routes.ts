@@ -19,6 +19,43 @@ function generateUUID(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+class ConcurrencyQueue {
+  private activeCount = 0;
+  private queue: (() => Promise<any>)[] = [];
+  private concurrency: number;
+
+  constructor(concurrency: number) {
+    this.concurrency = concurrency;
+  }
+
+  add<T>(fn: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const res = await fn();
+          resolve(res);
+        } catch (err) {
+          reject(err);
+        }
+      });
+      this.next();
+    });
+  }
+
+  private next() {
+    if (this.activeCount < this.concurrency && this.queue.length > 0) {
+      const fn = this.queue.shift()!;
+      this.activeCount++;
+      fn().finally(() => {
+        this.activeCount--;
+        this.next();
+      });
+    }
+  }
+}
+
+const alertQueue = new ConcurrencyQueue(1);
+
 // Endpoint: Trigger a new incident response workflow run
 router.post('/trigger', async (req: Request, res: Response) => {
   const { errorLog } = req.body;
@@ -42,10 +79,10 @@ router.post('/trigger', async (req: Request, res: Response) => {
       context: { errorLog }
     });
 
-    // 2. Start execution
-    const runResult = await run.start({
+    // 2. Queue and Start execution sequentially
+    const runResult = await alertQueue.add(() => run.start({
       inputData: { errorLog }
-    });
+    }));
 
     const runInfo = activeRuns.get(runId);
     if (runInfo) {
