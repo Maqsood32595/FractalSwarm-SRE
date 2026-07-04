@@ -188,6 +188,20 @@ const triageStep = createStep({
           proposedCommand = 'del /f /q "D:\\HiDevs\\GoogleAgents\\Log Folder\\temp_sys_bloat.log" && echo "Disk bloat log cleaned successfully."';
           explanation = '[Local Rule-Based Isolation] Disk utilization critical. Proposing targeted deletion of bloat log file.';
           confidence = 85;
+        } else if (lowerLog.includes('tfl') || lowerLog.includes('line') || lowerLog.includes('delay') || lowerLog.includes('suspended')) {
+          // Dynamically extract the line name to make each mock resolution unique!
+          let lineName = "Transit";
+          if (lowerLog.includes('bakerloo')) lineName = "Bakerloo Line";
+          else if (lowerLog.includes('circle')) lineName = "Circle Line";
+          else if (lowerLog.includes('district')) lineName = "District Line";
+          else if (lowerLog.includes('dlr')) lineName = "DLR";
+          else if (lowerLog.includes('hammersmith')) lineName = "Hammersmith & City Line";
+          else if (lowerLog.includes('waterloo')) lineName = "Waterloo & City Line";
+          else if (lowerLog.includes('metropolitan')) lineName = "Metropolitan Line";
+          
+          proposedCommand = `echo "ALERT: Rerouting backup transport and deploying emergency shuttle buses on the ${lineName} sector."`;
+          explanation = `[Local Rule-Based Transport Isolation] ${lineName} service degradation detected. Proposing automated bus bridge deployment to clear route congestion.`;
+          confidence = 92;
         } else {
           proposedCommand = 'echo "Triage complete. System status healthy."';
           explanation = '[Local Rule-Based Isolation] No active anomalies detected in logs. Proposing system health check.';

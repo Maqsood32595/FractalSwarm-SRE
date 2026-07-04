@@ -38,7 +38,8 @@ async function fetchLogsFromProject(projectId) {
     // This bypasses both:
     //   1. The cmd.exe shell (where gcloud outputs nothing on Windows)
     //   2. Any PowerShell profile scripts (like VibeCodingCheckpoint) that pollute stdout
-    const tmpFile = path.join(os.tmpdir(), `gcp_logs_${projectId.replace(/[^a-z0-9]/gi, '_')}.json`);
+    const uniqueId = Math.random().toString(36).substring(7);
+    const tmpFile = path.join(os.tmpdir(), `gcp_logs_${projectId.replace(/[^a-z0-9]/gi, '_')}_${uniqueId}.json`);
 
     const isWin = process.platform === 'win32';
     if (isWin) {

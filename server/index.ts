@@ -193,7 +193,6 @@ async function start() {
       const { exec } = require('child_process');
       const path = require('path');
       
-      // Execute the stream_gcp_logs.js script in the background
       const scriptPath = path.resolve(__dirname, '../stream_gcp_logs.js');
       
       exec(`node "${scriptPath}"`, (error: Error | null, stdout: string, stderr: string) => {
@@ -205,6 +204,24 @@ async function start() {
       });
       
       return res.json({ success: true, message: 'GCP ingestion started in background.' });
+    });
+
+    // Real TfL Transport Telemetry Ingestion Endpoint
+    app.post('/api/simulator/tfl-storm', (req, res) => {
+      const { exec } = require('child_process');
+      const path = require('path');
+      
+      const scriptPath = path.resolve(__dirname, '../stream_transport_logs.js');
+      
+      exec(`node "${scriptPath}"`, (error: Error | null, stdout: string, stderr: string) => {
+        if (error) {
+          console.error(`[TfL Ingest Error]: ${error.message}`);
+          return;
+        }
+        console.log(`[TfL Ingest Completed]: ${stdout}`);
+      });
+      
+      return res.json({ success: true, message: 'TfL transport ingestion started in background.' });
     });
 
     // Serve control panel Dashboard UI
@@ -330,6 +347,9 @@ async function start() {
                         <p class="text-xs text-slate-400 mt-1">Benchmarking local Zig/WASM POPCNT filtering against 1,000 concurrent alerts in real-time.</p>
                       </div>
                       <div class="flex gap-2">
+                        <button onclick="runTfLStorm()" id="tflStormBtn" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg transition flex items-center gap-2">
+                          <span>🚇</span> Live London Transit Data
+                        </button>
                         <button onclick="runGCPStorm()" id="gcpStormBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
                           <span>📡</span> Ingest Real GCP Telemetry
                         </button>
@@ -825,6 +845,28 @@ async function start() {
                   setTimeout(() => {
                     btn.disabled = false;
                     btn.innerHTML = '<span>📡</span> Ingest Real GCP Telemetry';
+                  }, 15000);
+                }
+              }
+
+              async function runTfLStorm() {
+                const btn = document.getElementById('tflStormBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span>🚇</span> Fetching TfL Status...';
+                
+                try {
+                  const res = await fetch('/api/simulator/tfl-storm', { method: 'POST' });
+                  if (res.ok) {
+                    showToast('🚇 TfL Connection Active', 'Querying real-time London transit alerts from TfL API...', 'success');
+                  } else {
+                    showToast('❌ TfL Fetch Failed', 'Failed to trigger ingestion.', 'error');
+                  }
+                } catch (e) {
+                  showToast('❌ Network Error', 'Failed to connect to Gateway.', 'error');
+                } finally {
+                  setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>🚇</span> Live London Transit Data';
                   }, 15000);
                 }
               }
