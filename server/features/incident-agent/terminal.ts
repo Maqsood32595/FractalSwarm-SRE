@@ -41,7 +41,7 @@ export async function executeTerminalCommand(command: string): Promise<{ success
   }
 
   try {
-    const { stdout, stderr } = await execPromise(commandToRun, { timeout: 30000 });
+    const { stdout, stderr } = await execPromise(commandToRun, { timeout: 120000 });
     
     return {
       success: true,

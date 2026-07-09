@@ -14,7 +14,8 @@
   },
   "include": [
     "server/**/*",
-    "simulator/**/*"
+    "simulator/**/*",
+    "GithubParellelAgents/**/*"
   ],
   "exclude": [
     "node_modules"

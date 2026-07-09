@@ -83,3 +83,16 @@ Treating automation code as a living, self-auditing organism.
   * Graphing the success vs failure ratio of runbooks over time. A drop in success indicates environment drift.
 * **Entropy Alerting:**
   * Warns the SRE team when two playbooks share high similarity but propose conflicting commands, recommending consolidation.
+
+---
+
+## 7. HITL (Human-in-the-Loop) AI Explanations
+To provide the human reviewer with the complete picture instantly on the Dashboard UI without having to mentally parse the entire code diff logic.
+
+### Specification:
+* **Structured Payload Prompting:**
+  * Modify the system prompt in `workflow.ts` to output a structured payload containing both an explanation and the code in a single response, using delimiters like `[EXPLANATION]` and `[CODE]`.
+* **Zero-Latency Extraction:**
+  * The SRE Gateway will parse this single payload into two variables (Explanation + Code), avoiding a second API round-trip.
+* **UI Rendering:**
+  * Render the explanation block in the Dashboard UI (`server.ts` HTML generator) directly above the `CODE CHANGE DIFF` block, giving the human instant, plain-English context for the AI's logic.

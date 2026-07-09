@@ -1,44 +1,44 @@
-# FractalSRE Implementation: Micro-Level Steps
+# FractalSwarm & GitHub Parallel Agents Project Roadmap
 
-This is the development tracker for **FractalSRE (Fractal Incident Commander)**. All steps are organized into distinct phases for building the high-performance, safety-audited incident response platform.
+This document outlines the development phases, completed features, and the implementation plan for the **GithubParellelAgents** pipeline.
 
 ---
 
-## Phase 1: Environment Setup & Scaffolding
-- [x] Create project `package.json` in `d:\HiDevs` with core dependencies (Express, CORS, Dotenv, Mastra, Qdrant, ts-node, TypeScript)
-- [x] Configure compiler options in `tsconfig.json`
-- [x] Run `npm install` to bootstrap development packages
+## Phase 1: Core SRE Control Plane (Completed)
+- [x] **Modular Express Backend:** Built the core feature gateways (`log-ingest`, `incident-agent`, `memory-vault`, `safety-guard`).
+- [x] **Mastra Multi-Agent Swarm:** Built the Parent-Child-Grandchild tree structure (Incident Commander, Domain Specialists, MCP Log Parsers).
+- [x] **Storage Triage Demo:** Implemented local file-path diagnostic metrics and self-healing log cleanup (`temp_sys_bloat.log` deletion).
+- [x] **Memory Vault Cache:** Implemented a binary memory database (`database.bin`) to cache verified playbooks and minimize LLM calls.
 
-## Phase 2: Express Fractal Kernel & API Gateway
-- [x] Implement the `FractalKernel` in `server/kernel.ts` with manifest auto-discovery and clean-room `require.cache` clearing
-- [x] Write Express control-plane bootstrap in `server/index.ts` with console dashboard
+---
 
-## Phase 3: High-Performance Memory Vault Cell (Zig/WASM QSAG Matcher)
-- [x] Implement the Zig POPCNT search module in `server/features/memory-vault/qsag_matcher.zig`
-- [x] Compile the Zig library into a freestanding WebAssembly binary (`qsag_matcher.wasm`) using the target `wasm32-freestanding`
-- [x] Implement the `Memory Vault` Express router in `server/features/memory-vault/routes.ts`
-  - [x] Set up WASM memory mapping and allocation offsets (Query, Outputs, DB Buffer)
-  - [x] Implement local float vector quantization (384d to 48-byte packed buffer)
-  - [x] Implement standard Javascript Lookup Table (LUT) POPCNT fallback path
-  - [x] Implement `Qdrant` client client-rest fallback queries
-  - [x] Implement database append `/ingest` and `/query` endpoints
+## Phase 2: Production Reliability & Hardening (Completed)
+- [x] **Express Concurrency Queue:** Wrapped the log-triage trigger in a sequential queue (`concurrency = 1`) to serialize incoming alerts.
+- [x] **Exponential Backoff (`retryWithBackoff`):** Wrapped all Gemini LLM calls in a retry handler that waits with escalating delays (3s, 6s, 12s...) during 429 rate-limit spikes.
+- [x] **Smart Fallback Rules:** Added fallback logic to dynamically extract line metadata (e.g. Bakerloo vs. District) and generate unique runbooks when LLM quotas are exhausted.
+- [x] **TfL Live API Integration:** Connected the dashboard to Transport for London (TfL) live REST streams to ingest active transit delays.
+- [x] **Bulk Swarm Deploys:** Implemented parallel workflow resolution using async event loops (`Promise.all`) on the `/resume-all` route.
 
-## Phase 4: Mastra Incident Agent Cell
-- [x] Create `server/features/incident-agent/feature.manifest.json` and Express routing cell
-- [x] Set up Mastra configuration, Logger, and Agent definitions in `server/features/incident-agent/agent.ts`
-- [x] Implement the Incident Mitigation Workflow in `server/features/incident-agent/workflow.ts`
-  - [x] State 1: `Triage` - queries `memory-vault` for matching playbook
-  - [x] State 2: `SafetyAudit` - checks proposed command via `safety-guard`
-  - [x] State 3: `RequestApproval` - suspends state machine and calls Slack Webhook
-  - [x] State 4: `ExecuteRemediation` - executes command on approval and writes post-mortem
-- [x] Implement local terminal script execution in `server/features/incident-agent/terminal.ts`
+---
 
-## Phase 5: Log Ingestion & Safety Guard Cells
-- [x] Create log ingestion route `server/features/log-ingest/routes.ts` and manifest
-- [x] Implement `server/features/safety-guard/guardrails.ts` calling Enkrypt AI `/guardrails/detect` POST API and manifest
+## Phase 3: Standalone Packaging & Open Source (Completed)
+- [x] **`/core-wasm` Standalone Pack:** Packaged the Zig source code and freestanding WebAssembly POPCNT log deduplicator with a Node.js test script.
+- [x] **`/orchestration-blueprint` Pack:** Packaged the core Mastra SRE agent trees and workflow scripts as a reusable blueprint.
+- [x] **Root Documentation:** Rewrote `README.md` to highlight the 90% LLM token-saving architecture.
 
-## Phase 6: Local Sandbox Simulator & Performance Benchmarks
-- [x] Write log storm burst simulator script in `simulator/storm-generator.ts`
-- [x] Test the pipeline under a burst of 1,000 alert requests in <100ms
-- [x] Verify sub-millisecond local filtering and print telemetry stats dashboard
-- [x] Profile memory usage and CPU footprint using PM2
+---
+
+## Phase 4: GitHub Parallel Agents (`GithubParellelAgents`) (In Progress)
+- [ ] **Repository Setup:** Clone the target repository (`vercel/ms`) into a local, isolated sandbox: `GithubParellelAgents/test_sandbox/ms`.
+- [ ] **GitHub Ingest Bridge:** Build `fetch_issues.js` to query live issues via GitHub REST API, support offline cached issues (`cached_issues.json`) for demo stability, and feed them into the log-ingest pipeline.
+- [ ] **Code Specialist Swarm:** Define the Code Agent swarm to read `src/index.ts` and draft git patches for the issues.
+- [ ] **Self-Correcting Test Runner:**
+  - Apply the patch to the sandbox repository.
+  - Run the local Jest test suite (`npm run test`).
+  - **If tests pass:** Proceed to simulate opening a Pull Request.
+  - **If tests fail:** Capture console/test error logs, trigger the LLM to rewrite the patch based on the error, and display the revised card on the dashboard.
+- [ ] **Safety Boundaries (Blast Radius Control):**
+  - Restrict write actions to file whitelist (`src/**/*.ts`).
+  - Implement automatic `git reset --hard` rollbacks on failed attempts or user rejection.
+  - Implement AST checks to block unauthorized imports.
+- [ ] **PR-Review Panel Dashboard:** Integrate the code diff editor directly into the control plane HTML dashboard.

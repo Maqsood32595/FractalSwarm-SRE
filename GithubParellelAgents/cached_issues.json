@@ -1,0 +1,23 @@
+[
+  {
+    "number": 143,
+    "title": "Bug: ms(-90000, { long: true }) returns '-1 minute' instead of '-1 minutes'",
+    "body": "Formatting negative values returns incorrect pluralization. For example, ms(-90000, { long: true }) returns '-1 minute' instead of '-1 minutes'. The plural logic should check the absolute value for pluralization but preserve the sign.",
+    "state": "open",
+    "created_at": "2026-07-06T13:00:00Z"
+  },
+  {
+    "number": 144,
+    "title": "Bug: ms.parse('100  ms') fails with double spaces",
+    "body": "Passing a string with multiple spaces between the value and the unit (e.g. '100  ms') fails to parse and returns NaN. The parser regex should support multiple spaces between the number and unit.",
+    "state": "open",
+    "created_at": "2026-07-06T14:00:00Z"
+  },
+  {
+    "number": 142,
+    "title": "Feature Request: support microsecond parsing, e.g., '1000us' or '1000μs'",
+    "body": "We need to add support for microseconds ('us' or 'μs') to milliseconds conversion. Currently, passing '1000us' returns NaN or throws an unknown unit error. It should return 1.",
+    "state": "open",
+    "created_at": "2026-07-06T12:00:00Z"
+  }
+]

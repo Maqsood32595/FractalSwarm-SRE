@@ -188,6 +188,42 @@ async function start() {
       });
     });
 
+    // Real TfL Transport Telemetry Ingestion Endpoint
+    app.post('/api/simulator/tfl-storm', (req, res) => {
+      const { exec } = require('child_process');
+      const path = require('path');
+      
+      const scriptPath = path.resolve(__dirname, '../stream_transport_logs.js');
+      
+      exec(`node "${scriptPath}"`, (error: Error | null, stdout: string, stderr: string) => {
+        if (error) {
+          console.error(`[TfL Ingest Error]: ${error.message}`);
+          return;
+        }
+        console.log(`[TfL Ingest Completed]: ${stdout}`);
+      });
+      
+      return res.json({ success: true, message: 'TfL transport ingestion started in background.' });
+    });
+
+    // GitHub Issues Triage Ingestion Endpoint
+    app.post('/api/simulator/github-storm', (req, res) => {
+      const { exec } = require('child_process');
+      const path = require('path');
+      
+      const scriptPath = path.resolve(__dirname, '../GithubParellelAgents/fetch_issues.js');
+      
+      exec(`node "${scriptPath}"`, (error: Error | null, stdout: string, stderr: string) => {
+        if (error) {
+          console.error(`[GitHub Ingest Error]: ${error.message}`);
+          return;
+        }
+        console.log(`[GitHub Ingest Completed]: ${stdout}`);
+      });
+      
+      return res.json({ success: true, message: 'GitHub issues ingestion started.' });
+    });
+
     // Real GCP Telemetry Ingestion Endpoint
     app.post('/api/simulator/gcp-storm', (req, res) => {
       const { exec } = require('child_process');
@@ -206,23 +242,7 @@ async function start() {
       return res.json({ success: true, message: 'GCP ingestion started in background.' });
     });
 
-    // Real TfL Transport Telemetry Ingestion Endpoint
-    app.post('/api/simulator/tfl-storm', (req, res) => {
-      const { exec } = require('child_process');
-      const path = require('path');
-      
-      const scriptPath = path.resolve(__dirname, '../stream_transport_logs.js');
-      
-      exec(`node "${scriptPath}"`, (error: Error | null, stdout: string, stderr: string) => {
-        if (error) {
-          console.error(`[TfL Ingest Error]: ${error.message}`);
-          return;
-        }
-        console.log(`[TfL Ingest Completed]: ${stdout}`);
-      });
-      
-      return res.json({ success: true, message: 'TfL transport ingestion started in background.' });
-    });
+
 
     // Serve control panel Dashboard UI
     app.get('/', (req, res) => {
@@ -347,14 +367,14 @@ async function start() {
                         <p class="text-xs text-slate-400 mt-1">Benchmarking local Zig/WASM POPCNT filtering against 1,000 concurrent alerts in real-time.</p>
                       </div>
                       <div class="flex gap-2">
+                        <button onclick="runGitHubStorm()" id="githubStormBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg transition flex items-center gap-2">
+                          <span>🐙</span> Live GitHub Issues Feed
+                        </button>
                         <button onclick="runTfLStorm()" id="tflStormBtn" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg transition flex items-center gap-2">
                           <span>🚇</span> Live London Transit Data
                         </button>
                         <button onclick="runGCPStorm()" id="gcpStormBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
                           <span>📡</span> Ingest Real GCP Telemetry
-                        </button>
-                        <button onclick="runAlertStorm()" id="stormBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-lg transition">
-                          Fire 1,000 Alert Storm
                         </button>
                       </div>
                     </div>
@@ -867,6 +887,28 @@ async function start() {
                   setTimeout(() => {
                     btn.disabled = false;
                     btn.innerHTML = '<span>🚇</span> Live London Transit Data';
+                  }, 15000);
+                }
+              }
+
+              async function runGitHubStorm() {
+                const btn = document.getElementById('githubStormBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span>🐙</span> Fetching GitHub Issues...';
+                
+                try {
+                  const res = await fetch('/api/simulator/github-storm', { method: 'POST' });
+                  if (res.ok) {
+                    showToast('🐙 GitHub Connection Active', 'Querying open issues from vercel/ms repository...', 'success');
+                  } else {
+                    showToast('❌ GitHub Fetch Failed', 'Failed to trigger ingestion.', 'error');
+                  }
+                } catch (e) {
+                  showToast('❌ Network Error', 'Failed to connect to Gateway.', 'error');
+                } finally {
+                  setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>🐙</span> Live GitHub Issues Feed';
                   }, 15000);
                 }
               }
